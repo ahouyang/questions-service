@@ -26,7 +26,7 @@ class AddQuestion(Resource):
 		question['title'] = args['title']
 		question['body'] = args['body']
 		question['username'] = args['username']
-		question['tags'] = args['tags']
+		question['tags'] = [] is args['tags'] is None else args['tags']
 		question['score'] = 0
 		question['view_count'] = 0
 		question['answer_count'] = 0
@@ -58,7 +58,6 @@ class GetQuestion(Resource):
 		resp['answer_count'] = question['answer_count']
 		resp['timestamp'] = question['timestamp']
 		resp['media'] = question['media']
-		resp['media'] = question['media']
 		resp['tags'] = question['tags']
 		resp['accepted_answer_id'] = question['accepted_answer_id']
 		users = get_users_coll()
@@ -67,6 +66,50 @@ class GetQuestion(Resource):
 		u['username'] = user['username']
 		u['reputation'] = user['reputation']
 		resp['user'] = u
+		return resp
+
+class AddAnswer(Resource):
+	def post(self):
+		parser = reqparse.RequestParser()
+		parser.add_argument('body')
+		parser.add_argument('username')
+		parser.add_argument('id')
+		parser.add_argument('media', action='append')
+		args = parser.parse_args()
+		answers = get_answers_coll()
+		answer = {}
+		count = answers.count() + 1
+		answer['id'] = args['username'] + '_a_' + count
+		answer['question_id'] = args['id']
+		answer['body'] = args['body']
+		answer['media'] = args.get('media')
+		answer['user'] = args['username']
+		answer['score'] = 0
+		answer['is_accepted'] = False
+		answer['timestamp'] = time.time()
+		answers.insert_one(answer)
+		resp = {}
+		resp['status'] = 'OK'
+		resp['id'] = answer['id']
+		return resp
+
+class GetAnswers(Resource):
+	def get(self, id):
+		answers = get_answers_coll()
+		answers_cur = answers.find({'question_id':id})
+		resp = {}
+		resp['answers'] = {}
+		for doc in answers_cur:
+			ans = {}
+			ans['id'] = doc['id']
+			ans['user'] = doc['user']
+			ans['body'] = doc['body']
+			ans['score'] = doc['score']
+			ans['is_accepted'] = doc['is_accepted']
+			ans['timestamp'] = doc['timestamp']
+			ans['media'] = doc['media']
+			resp['answers'].append(ans)
+		resp['status'] = 'OK'
 		return resp
 
 
@@ -87,10 +130,18 @@ def get_users_coll():
 	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
 	mydb = myclient['finalproject']
 	users = mydb['users']
-	return users	
+	return users
+
+def get_answers_coll():
+	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
+	mydb = myclient['finalproject']
+	users = mydb['answers']
+	return users
 
 api.add_resource(AddQuestion, '/add')
 api.add_resource(GetQuestion, '/getquestion')
+api.add_resource(AddAnswer, '/addanswer')
+api.add_resource(GetAnswers, '/getanswers/<id>')
 
 
 if __name__ == '__main__':
