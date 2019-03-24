@@ -26,7 +26,7 @@ class AddQuestion(Resource):
 		question['title'] = args['title']
 		question['body'] = args['body']
 		question['username'] = args['username']
-		question['tags'] = [] is args['tags'] is None else args['tags']
+		question['tags'] = [] if args['tags'] is None else args['tags']
 		question['score'] = 0
 		question['view_count'] = 0
 		question['answer_count'] = 0
@@ -79,7 +79,7 @@ class AddAnswer(Resource):
 		answers = get_answers_coll()
 		answer = {}
 		count = answers.count() + 1
-		answer['id'] = args['username'] + '_a_' + count
+		answer['id'] = args['username'] + '_a_' + str(count)
 		answer['question_id'] = args['id']
 		answer['body'] = args['body']
 		answer['media'] = args.get('media')
@@ -98,7 +98,7 @@ class GetAnswers(Resource):
 		answers = get_answers_coll()
 		answers_cur = answers.find({'question_id':id})
 		resp = {}
-		resp['answers'] = {}
+		resp['answers'] = []
 		for doc in answers_cur:
 			ans = {}
 			ans['id'] = doc['id']
