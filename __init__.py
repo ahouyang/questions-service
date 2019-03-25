@@ -112,6 +112,38 @@ class GetAnswers(Resource):
 		resp['status'] = 'OK'
 		return resp
 
+class Search(Resource):
+	def post(self):
+		args = parse_args_list(['timestamp', 'limit'])
+		questions = get_questions_coll()
+		cur = questions.find({'timestamp':{'$lt':args['timestamp']}, '$limit':args['limit']})
+		users = get_users_coll()
+		listquestions = []
+		for question in cur:
+			resp = {}
+			resp['status'] = 'OK'
+			resp['id'] = question['id']
+			resp['title'] = question['title']
+			resp['body'] = question['body']
+			resp['score'] = question['score']
+			resp['view_count'] = question['view_count'] 
+			resp['answer_count'] = question['answer_count']
+			resp['timestamp'] = question['timestamp']
+			resp['media'] = question['media']
+			resp['tags'] = question['tags']
+			resp['accepted_answer_id'] = question['accepted_answer_id']
+			user = users.find_one({'username':question['username']})
+			u = {}
+			u['username'] = user['username']
+			u['reputation'] = user['reputation']
+			resp['user'] = u			
+			listquestions.append(resp)
+		resp = {}
+		resp['status'] = 'OK'
+		resp['questions'] = listquestions
+		return questions
+
+
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
@@ -142,6 +174,7 @@ api.add_resource(AddQuestion, '/add')
 api.add_resource(GetQuestion, '/getquestion')
 api.add_resource(AddAnswer, '/addanswer')
 api.add_resource(GetAnswers, '/getanswers/<id>')
+api.add_resource(Search, '/search')
 
 
 if __name__ == '__main__':
