@@ -114,9 +114,13 @@ class GetAnswers(Resource):
 
 class Search(Resource):
 	def post(self):
-		args = parse_args_list(['timestamp', 'limit'])
+		parser = reqparse.RequestParser()
+		parser.add_argument('timestamp', type=float)
+		parser.add_argument('limit', type=int)
+		args = parser.parse_args()
 		questions = get_questions_coll()
-		cur = questions.find({'timestamp':{'$lt':args['timestamp']}, '$limit':args['limit']})
+		print('#####################' + str(args), sys.stderr)
+		cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
@@ -141,7 +145,7 @@ class Search(Resource):
 		resp = {}
 		resp['status'] = 'OK'
 		resp['questions'] = listquestions
-		return questions
+		return resp
 
 
 
