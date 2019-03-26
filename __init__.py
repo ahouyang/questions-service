@@ -53,22 +53,24 @@ class GetQuestion(Resource):
 				'$set':{'view_count':len(viewed)}})
 		resp = {}
 		resp['status'] = 'OK'
-		resp['id'] = question['id']
-		resp['title'] = question['title']
-		resp['body'] = question['body']
-		resp['score'] = question['score']
-		resp['view_count'] = question['view_count'] if not inc else len(viewed)
-		resp['answer_count'] = question['answer_count']
-		resp['timestamp'] = question['timestamp']
-		resp['media'] = question['media']
-		resp['tags'] = question['tags']
-		resp['accepted_answer_id'] = question['accepted_answer_id']
+		q = {}
+		q['id'] = question['id']
+		q['title'] = question['title']
+		q['body'] = question['body']
+		q['score'] = question['score']
+		q['view_count'] = question['view_count'] if not inc else len(viewed)
+		q['answer_count'] = question['answer_count']
+		q['timestamp'] = question['timestamp']
+		q['media'] = question['media']
+		q['tags'] = question['tags']
+		q['accepted_answer_id'] = question['accepted_answer_id']
 		users = get_users_coll()
 		user = users.find_one({'username':question['username']})
 		u = {}
 		u['username'] = user['username']
 		u['reputation'] = user['reputation']
-		resp['user'] = u
+		q['user'] = u
+		resp['question'] = q
 		return resp
 
 class AddAnswer(Resource):
