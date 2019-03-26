@@ -36,12 +36,15 @@ class AddQuestion(Resource):
 		question['viewed'] = []
 		questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
+	
 
 class GetQuestion(Resource):
 	def post(self):
 		args = parse_args_list(['id', 'user'])
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
+		if question is None:
+			return {'status':'error', 'error': 'no question with id ' + args['id']}
 		viewed = question['viewed']
 		inc = args['user'] not in viewed
 		if inc:
@@ -96,6 +99,10 @@ class AddAnswer(Resource):
 class GetAnswers(Resource):
 	def get(self, id):
 		answers = get_answers_coll()
+		questions = get_questions_coll()
+		question = questions.find_one({'id':id})
+		if question is None:
+			return {'status':'error', 'error': 'no question with id ' + id}
 		answers_cur = answers.find({'question_id':id})
 		resp = {}
 		resp['answers'] = []
@@ -157,6 +164,7 @@ def parse_args_list(argnames):
 	return args
 
 def get_questions_coll():
+	# reconnecting may cause performance issues
 	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
 	mydb = myclient['finalproject']
 	users = mydb['questions']
