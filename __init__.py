@@ -156,6 +156,23 @@ class Search(Resource):
 		resp['questions'] = listquestions
 		return resp
 
+class TopTen(Resource):
+	def post(self):
+		questions = get_questions_coll()
+		resp = {}
+		topten = []
+		cur = questions.find().limit(10)
+		for q in cur:
+			question = {}
+			question['title'] = q['title']
+			question['body'] = q['body']
+			question['view_count'] = q['view_count']
+			topten.append(question)
+		resp['status'] = 'OK'
+		resp['questions'] = topten
+		return resp
+
+
 
 
 def parse_args_list(argnames):
@@ -189,6 +206,7 @@ api.add_resource(GetQuestion, '/getquestion')
 api.add_resource(AddAnswer, '/addanswer')
 api.add_resource(GetAnswers, '/getanswers/<id>')
 api.add_resource(Search, '/search')
+api.add_resource(TopTen, '/topten')
 
 
 if __name__ == '__main__':
