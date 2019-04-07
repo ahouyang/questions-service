@@ -81,7 +81,16 @@ class GetQuestion(Resource):
 
 class DeleteQuestion(Resource):
 	def delete(self):
-
+		args = parse_args_list(['id', 'user'])
+		questions = get_questions_coll()
+		question = questions.find_one({'id':args['id']})
+		if question is not None and question['user'] == args['user']:
+			questions.delete_one({'id':args['id']})
+			return {'status': 'OK'}
+			#TODO : Delete answers and associated metadata
+		else:
+			resp = {'status': 'ERROR'}, 400
+			return resp
 
 class AddAnswer(Resource):
 	def post(self):
@@ -223,6 +232,7 @@ api.add_resource(AddAnswer, '/addanswer')
 api.add_resource(GetAnswers, '/getanswers/<id>')
 api.add_resource(Search, '/search')
 api.add_resource(TopTen, '/topten')
+api.add_resource(DeleteQuestion, '/deletequestion')
 
 
 if __name__ == '__main__':
