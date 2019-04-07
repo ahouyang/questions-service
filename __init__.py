@@ -26,7 +26,7 @@ class AddQuestion(Resource):
 			idnum['idnum'] = 0
 			questions.insert_one(idnum)
 		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
-		questions.update_one('$set':{'idnum':idnum})
+		questions.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
 		question = {}
 		question['id'] = args['username'] + '_q_' + str(idnum) 
 		question['title'] = args['title']
@@ -84,7 +84,7 @@ class DeleteQuestion(Resource):
 		args = parse_args_list(['id', 'user'])
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
-		if question is not None and question['user'] == args['user']:
+		if question is not None and question['username'] == args['user']:
 			questions.delete_one({'id':args['id']})
 			return {'status': 'OK'}
 			#TODO : Delete answers and associated metadata
@@ -108,7 +108,7 @@ class AddAnswer(Resource):
 			idnum['idnum'] = 0
 			answers.insert_one(idnum)
 		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
-		answers.update_one('$set':{'idnum':idnum})
+		answers.update_one({'$set':{'idnum':idnum}})
 		answer['id'] = args['username'] + '_a_' + str(idnum)
 		answer['question_id'] = args['id']
 		answer['body'] = args['body']
