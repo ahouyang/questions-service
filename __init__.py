@@ -20,7 +20,13 @@ class AddQuestion(Resource):
 		parser.add_argument('tags', action='append')
 		args = parser.parse_args()
 		questions = get_questions_coll()
-		idnum = questions.count() + 1
+		dbidnum = questions.find_one({'idnum':{'$gt': 0}})
+		if dbidnum == None:
+			idnum = {}
+			idnum['idnum'] = 0
+			questions.insert_one(idnum)
+		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
+		questions.update_one('$set':{'idnum':idnum})
 		question = {}
 		question['id'] = args['username'] + '_q_' + str(idnum) 
 		question['title'] = args['title']
@@ -73,6 +79,10 @@ class GetQuestion(Resource):
 		resp['question'] = q
 		return resp
 
+class DeleteQuestion(Resource):
+	def delete(self):
+
+
 class AddAnswer(Resource):
 	def post(self):
 		parser = reqparse.RequestParser()
@@ -83,8 +93,14 @@ class AddAnswer(Resource):
 		args = parser.parse_args()
 		answers = get_answers_coll()
 		answer = {}
-		count = answers.count() + 1
-		answer['id'] = args['username'] + '_a_' + str(count)
+		dbidnum = answers.find_one({'idnum':{'$gt': 0}})
+		if dbidnum == None:
+			idnum = {}
+			idnum['idnum'] = 0
+			answers.insert_one(idnum)
+		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
+		answers.update_one('$set':{'idnum':idnum})
+		answer['id'] = args['username'] + '_a_' + str(idnum)
 		answer['question_id'] = args['id']
 		answer['body'] = args['body']
 		answer['media'] = args.get('media')
