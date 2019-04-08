@@ -182,13 +182,15 @@ class Search(Resource):
 		return resp
 
 class TopTen(Resource):
-	def post(self):
+	def get(self):
 		questions = get_questions_coll()
 		resp = {}
 		topten = []
-		cur = questions.find().limit(10)
+		cur = questions.find({'view_count':{'$gt':-1}}).limit(10)
 		for q in cur:
+			#print(str(q) + '------------------------', std.err)
 			question = {}
+			question['id'] = q['id']
 			question['title'] = q['title']
 			question['body'] = q['body']
 			question['view_count'] = q['view_count']
