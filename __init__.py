@@ -151,10 +151,17 @@ class Search(Resource):
 		parser = reqparse.RequestParser()
 		parser.add_argument('timestamp', type=float)
 		parser.add_argument('limit', type=int)
+		parser.add_argument('query')
 		args = parser.parse_args()
 		questions = get_questions_coll()
 		print('#####################' + str(args), sys.stderr)
-		cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
+		cur = None
+		if args['query'] is None:	# if search query wasn't entered
+			cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
+		else:	# if search query was entered
+			cur = questions.find('$and': [{'timestamp':{'$lt':args['timestamp']}},
+										  {'$text':{'$search':args['query']}}])
+											.limit(args['limit'])
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
