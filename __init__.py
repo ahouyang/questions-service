@@ -156,12 +156,11 @@ class Search(Resource):
 		questions = get_questions_coll()
 		print('#####################' + str(args), sys.stderr)
 		cur = None
-		if args['query'] is None:	# if search query wasn't entered
+		if args['query'] is None or args['query'] == '':	# if search query wasn't entered
 			cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
 		else:	# if search query was entered
-			cur = questions.find('$and': [{'timestamp':{'$lt':args['timestamp']}},
-										  {'$text':{'$search':args['query']}}])
-											.limit(args['limit'])
+			cur = questions.find({'$and': [{'timestamp':{'$lt':args['timestamp']}},
+										  {'$text':{'$search':args['query']}}]}).limit(args['limit'])
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
