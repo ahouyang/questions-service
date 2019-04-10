@@ -33,7 +33,7 @@ class AddQuestion(Resource):
 		question['body'] = args['body']
 		question['username'] = args['username']
 		question['tags'] = [] if args['tags'] is None else args['tags']
-		question['score'] = 0
+		question['score'] = 1
 		question['view_count'] = 0
 		question['answer_count'] = 0
 		question['timestamp'] = time.time()
@@ -47,6 +47,7 @@ class AddQuestion(Resource):
 class GetQuestion(Resource):
 	def post(self):
 		args = parse_args_list(['id', 'user'])
+		print(str(args) + "******************************", sys.stderr)
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
 		if question is None:
@@ -67,8 +68,8 @@ class GetQuestion(Resource):
 		q['view_count'] = question['view_count'] if not inc else len(viewed)
 		q['answer_count'] = question['answer_count']
 		q['timestamp'] = question['timestamp']
-		q['media'] = question['media']
-		q['tags'] = question['tags']
+		#q['media'] = question['media']
+		#q['tags'] = question['tags']
 		q['accepted_answer_id'] = question['accepted_answer_id']
 		users = get_users_coll()
 		user = users.find_one({'username':question['username']})
@@ -77,6 +78,7 @@ class GetQuestion(Resource):
 		u['reputation'] = user['reputation']
 		q['user'] = u
 		resp['question'] = q
+		print(str(resp) + "<- is resp ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", sys.stderr)
 		return resp
 
 class DeleteQuestion(Resource):
@@ -108,13 +110,13 @@ class AddAnswer(Resource):
 			idnum['idnum'] = 0
 			answers.insert_one(idnum)
 		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
-		answers.update_one({'$set':{'idnum':idnum}})
+		answers.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
 		answer['id'] = args['username'] + '_a_' + str(idnum)
 		answer['question_id'] = args['id']
 		answer['body'] = args['body']
 		answer['media'] = args.get('media')
 		answer['user'] = args['username']
-		answer['score'] = 0
+		answer['score'] = 1
 		answer['is_accepted'] = False
 		answer['timestamp'] = time.time()
 		answers.insert_one(answer)
@@ -154,7 +156,8 @@ class Search(Resource):
 		parser.add_argument('query')
 		args = parser.parse_args()
 		questions = get_questions_coll()
-		print('#####################' + str(args), sys.stderr)
+		questions.create_index([('title', 'text'), ('body', 'text')], default_language='none')
+		print('#####################' + str(args['query']), sys.stderr)
 		cur = None
 		if args['query'] is None or args['query'] == '':	# if search query wasn't entered
 			cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
@@ -164,6 +167,7 @@ class Search(Resource):
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
+			print(str(question) + '----------------------------', sys.stderr)
 			resp = {}
 			resp['status'] = 'OK'
 			resp['id'] = question['id']
