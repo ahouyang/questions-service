@@ -154,6 +154,7 @@ class Search(Resource):
 		parser.add_argument('query')
 		args = parser.parse_args()
 		questions = get_questions_coll()
+		questions.create_index([('title', 'text'), ('body', 'text')])
 		print('#####################' + str(args), sys.stderr)
 		cur = None
 		if args['query'] is None or args['query'] == '':	# if search query wasn't entered
