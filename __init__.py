@@ -209,6 +209,10 @@ class TopTen(Resource):
 		resp['questions'] = topten
 		return resp
 
+class Upvote(Resource):
+	def post(self):
+		return {'status' : 'OK'}
+
 
 
 
