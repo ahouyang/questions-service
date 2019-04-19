@@ -210,10 +210,10 @@ class TopTen(Resource):
 		return resp
 
 class Upvote(Resource):
-	def post(self):
-		return {'status' : 'OK'}
-
-
+	def post(self, id):
+		user = request.args['username']
+		upvote = request.args['upvote']
+		questions = get_questions_coll()
 
 
 def parse_args_list(argnames):
