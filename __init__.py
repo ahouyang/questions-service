@@ -213,15 +213,46 @@ class Upvote(Resource):
 	def post(self, id):
 		parser = reqparse.RequestParser()
 		parser.add_argument('username')
-		parser.add_argument('action', type=inputs.boolean)
+		parser.add_argument('upvote', type=inputs.boolean)
 		args = parser.parse_args()
 		print('####################' + str(args), sys.stderr)
-		user = args['username']
-		upvote = args['action']
+		username = args['username']
+		upvote = args['upvote']
+		step = 1 if upvote else -1
+		users = get_users_coll()
 		questions = get_questions_coll()
+		question = questions.find_one({'id':id})
+		score = question['score']
+		poster_username = question['username']
+		user = users.find_one({'username': username})
+		poster = users.find_one({'username': poster_username})
+		rep = poster['reputation']
+		upvoted = user['upvoted']
+		downvoted = user['downvoted']
+		if upvote:
+			if id in upvoted:
+				step -= 2
+				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
+			elif id in downvoted:
+				step += 1
+				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
+			else:
+				users.update_one({'username':username}, {'$push':{'upvoted':id}})
+		else:
+			if id in upvoted:
+				step -= 1
+				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
+			elif id in downvoted:
+				step += 1
+				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
+			else:
+				users.update_one({'username':username}, {'$push':{'downvoted':id}})
+		score += step
+		questions.update_one({'id':id}, {'$set':{'score':score}})
+		rep = rep + step if rep + step > 1 else 1
+		users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		resp = {}
-		resp['username'] = user
-		resp['upvote'] = upvote
+		resp['status'] = 'OK'
 		return resp
 
 
