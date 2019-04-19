@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, make_response, jsonify
-from flask_restful import Resource, Api, reqparse
+from flask_restful import Resource, Api, reqparse, inputs
 import pymongo
 import datetime
 import sys
@@ -211,9 +211,18 @@ class TopTen(Resource):
 
 class Upvote(Resource):
 	def post(self, id):
-		user = request.args['username']
-		upvote = request.args['upvote']
+		parser = reqparse.RequestParser()
+		parser.add_argument('username')
+		parser.add_argument('action', type=inputs.boolean)
+		args = parser.parse_args()
+		print('####################' + str(args), sys.stderr)
+		user = args['username']
+		upvote = args['action']
 		questions = get_questions_coll()
+		resp = {}
+		resp['username'] = user
+		resp['upvote'] = upvote
+		return resp
 
 
 def parse_args_list(argnames):
@@ -249,7 +258,7 @@ api.add_resource(GetAnswers, '/getanswers/<id>')
 api.add_resource(Search, '/search')
 api.add_resource(TopTen, '/topten')
 api.add_resource(DeleteQuestion, '/deletequestion')
-
+api.add_resource(Upvote, '/upvote/<id>')
 
 if __name__ == '__main__':
 	app.run(debug=True)
