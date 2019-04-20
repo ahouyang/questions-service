@@ -229,23 +229,28 @@ class Upvote(Resource):
 		rep = poster['reputation']
 		upvoted = user['upvoted']
 		downvoted = user['downvoted']
+		print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
 			if id in upvoted:
 				step -= 2
 				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
 			elif id in downvoted:
 				step += 1
-				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
+				users.update_one({'username':username}, {'$pull':{'downvoted':id}, 
+					'$push':{'upvoted':id}})
 			else:
+				print('adding {} to upvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'upvoted':id}})
 		else:
 			if id in upvoted:
 				step -= 1
-				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
+				users.update_one({'username':username}, {'$pull':{'upvoted':id},
+					'$push':{'downvoted':id}})
 			elif id in downvoted:
-				step += 1
+				step += 2
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
+				print('adding {} to downvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		questions.update_one({'id':id}, {'$set':{'score':score}})
