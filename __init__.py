@@ -311,6 +311,25 @@ class UpvoteAnswer(Resource):
 		resp['status'] = 'OK'
 		return resp
 
+class AcceptAnswer(Resource):
+	def post(self, id):
+		args = parse_args_list(['username'])
+		username = args['username']
+		questions = get_questions_coll()
+		answers = get_answers_coll()
+		answer = answers.find_one({'id':id})
+		qid = answer['question_id']
+		question = questions.find_one({'id':qid})
+		if username != question['username']:
+			return {'status':'error', 'error':'not original asker'}
+		accepted_id = question['accepted_answer_id']
+		if accepted_id is not None:
+			return {'status':'error', 'error':'there is already an accepted answer'}
+		questions.update_one({'id':qid}, {'$set':{'accepted_answer_id':id}})
+		answers.update_one({'id':id}, {'$set':{'is_accepted':True}})
+		return {'status':'OK'}
+
+
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
 	for arg in argnames:
@@ -346,6 +365,7 @@ api.add_resource(TopTen, '/topten')
 api.add_resource(DeleteQuestion, '/deletequestion')
 api.add_resource(Upvote, '/upvote/<id>')
 api.add_resource(UpvoteAnswer, '/upvoteanswer/<id>')
+api.add_resource(AcceptAnswer, '/acceptanswer/<id>')
 
 if __name__ == '__main__':
 	app.run(debug=True)
