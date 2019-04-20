@@ -260,7 +260,7 @@ class Upvote(Resource):
 		resp['status'] = 'OK'
 		return resp
 
-def UpvoteAnswer(Resource):
+class UpvoteAnswer(Resource):
 	def post(self, id):
 		parser = reqparse.RequestParser()
 		parser.add_argument('username')
