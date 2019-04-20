@@ -260,6 +260,56 @@ class Upvote(Resource):
 		resp['status'] = 'OK'
 		return resp
 
+def UpvoteAnswer(Resource):
+	def post(self, id):
+		parser = reqparse.RequestParser()
+		parser.add_argument('username')
+		parser.add_argument('upvote', type=inputs.boolean)
+		args = parser.parse_args()
+		print('####################' + str(args), sys.stderr)
+		username = args['username']
+		upvote = args['upvote']
+		step = 1 if upvote else -1
+		users = get_users_coll()
+		answers = get_answers_coll()
+		answer = answers.find_one({'id':id})
+		score = answer['score']
+		poster_username = answer['user']
+		user = users.find_one({'username': username})
+		poster = users.find_one({'username': poster_username})
+		rep = poster['reputation']
+		upvoted = user['upvoted']
+		downvoted = user['downvoted']
+		print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
+		if upvote:
+			if id in upvoted:
+				step -= 2
+				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
+			elif id in downvoted:
+				step += 1
+				users.update_one({'username':username}, {'$pull':{'downvoted':id}, 
+					'$push':{'upvoted':id}})
+			else:
+				print('adding {} to upvoted'.format(id), sys.stderr)
+				users.update_one({'username':username}, {'$push':{'upvoted':id}})
+		else:
+			if id in upvoted:
+				step -= 1
+				users.update_one({'username':username}, {'$pull':{'upvoted':id},
+					'$push':{'downvoted':id}})
+			elif id in downvoted:
+				step += 2
+				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
+			else:
+				print('adding {} to downvoted'.format(id), sys.stderr)
+				users.update_one({'username':username}, {'$push':{'downvoted':id}})
+		score += step
+		answers.update_one({'id':id}, {'$set':{'score':score}})
+		rep = rep + step if rep + step > 1 else 1
+		users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+		resp = {}
+		resp['status'] = 'OK'
+		return resp
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
@@ -295,6 +345,7 @@ api.add_resource(Search, '/search')
 api.add_resource(TopTen, '/topten')
 api.add_resource(DeleteQuestion, '/deletequestion')
 api.add_resource(Upvote, '/upvote/<id>')
+api.add_resource(UpvoteAnswer, '/upvoteanswer/<id>')
 
 if __name__ == '__main__':
 	app.run(debug=True)
