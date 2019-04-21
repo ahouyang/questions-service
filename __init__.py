@@ -38,7 +38,7 @@ class AddQuestion(Resource):
 		question['answer_count'] = 0
 		question['timestamp'] = time.time()
 		question['accepted_answer_id'] = None
-		question['media'] = []
+		question['media'] = None
 		question['viewed'] = []
 		questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
@@ -68,8 +68,8 @@ class GetQuestion(Resource):
 		q['view_count'] = question['view_count'] if not inc else len(viewed)
 		q['answer_count'] = question['answer_count']
 		q['timestamp'] = question['timestamp']
-		#q['media'] = question['media']
-		#q['tags'] = question['tags']
+		q['media'] = question['media'] if question['media'] is not None else []
+		q['tags'] = question['tags']
 		q['accepted_answer_id'] = question['accepted_answer_id']
 		users = get_users_coll()
 		user = users.find_one({'username':question['username']})
@@ -154,16 +154,43 @@ class Search(Resource):
 		parser.add_argument('timestamp', type=float)
 		parser.add_argument('limit', type=int)
 		parser.add_argument('query')
+		parser.add_argument('sort_by')
+		parser.add_argument('tags')
+		parser.add_argument('has_media')
+		parser.add_argument('accepted')
 		args = parser.parse_args()
 		questions = get_questions_coll()
 		questions.create_index([('title', 'text'), ('body', 'text')], default_language='none')
 		print('#####################' + str(args['query']), sys.stderr)
 		cur = None
-		if args['query'] is None or args['query'] == '':	# if search query wasn't entered
-			cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
-		else:	# if search query was entered
-			cur = questions.find({'$and': [{'timestamp':{'$lt':args['timestamp']}},
-										  {'$text':{'$search':args['query']}}]}).limit(args['limit'])
+		query = {}
+		sort_by_score = True
+		if args['query'] is None and args['tags'] is None and args['has_media'] is None and args['accepted'] is None and args['sort_by']:
+			query['timestamp'] = {'$lt':args['timestamp']}
+		# if args['query'] is None or args['query'] == '':	# if search query wasn't entered
+			# cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
+		else:
+			query['$and'] = [{'timestamp':{'$lt':args['timestamp']}}]
+			if args['query'] is not None:	# if search query was entered
+				query['$and'].append({'$text':{'$search':args['query']}})
+			if args['tags'] is not None:
+				query['$and'].append({'tags':{'$all':args['tags']}})
+			if args['has_media'] is not None and args['has_media']:
+				query['$and'].append({'media':{'$ne':None}})
+			if args['accepted'] is not None and args['accepted']:
+				query['$and'].append({'accepted_answer_id':{'$ne':None}})
+			if args['sort_by'] is not None:
+				if args['sort_by'] == 'timestamp':
+					sort_by_score = False
+
+
+			# cur = questions.find({'$and': [{'timestamp':{'$lt':args['timestamp']}},
+			# 							  {'$text':{'$search':args['query']}}]}).limit(args['limit'])
+		cur = None
+		if sort_by_score:
+			cur = questions.find(query).limit(args['limit']).sort([('score', pymongo.DESCENDING)])
+		else:
+			cur = questions.find(query).limit(args['limit']).sort([('timestamp', pymongo.DESCENDING)])
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
@@ -177,7 +204,7 @@ class Search(Resource):
 			resp['view_count'] = question['view_count'] 
 			resp['answer_count'] = question['answer_count']
 			resp['timestamp'] = question['timestamp']
-			resp['media'] = question['media']
+			resp['media'] = question['media'] if question['media'] is not None else []
 			resp['tags'] = question['tags']
 			resp['accepted_answer_id'] = question['accepted_answer_id']
 			user = users.find_one({'username':question['username']})
