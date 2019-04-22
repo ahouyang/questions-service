@@ -155,22 +155,26 @@ class Search(Resource):
 		parser.add_argument('limit', type=int)
 		parser.add_argument('query')
 		parser.add_argument('sort_by')
-		parser.add_argument('tags')
-		parser.add_argument('has_media')
-		parser.add_argument('accepted')
+		parser.add_argument('tags', action='append')
+		parser.add_argument('has_media', type=inputs.boolean)
+		parser.add_argument('accepted', type=inputs.boolean)
 		args = parser.parse_args()
 		questions = get_questions_coll()
 		questions.create_index([('title', 'text'), ('body', 'text')], default_language='none')
-		print('#####################' + str(args['query']), sys.stderr)
+		#print('#####################' + str(args), sys.stderr)
 		cur = None
 		query = {}
 		sort_by_score = True
-		if args['query'] is None and args['tags'] is None and args['has_media'] is None and args['accepted'] is None and args['sort_by']:
+		if args['tags'] is not None and args['tags'][0] is None:
+			args['tags'] = None
+		print('#####################' + str(args), sys.stderr)
+		if args['query'] is None and args['tags'] is None and args['has_media'] is None and args['accepted'] is None:
 			query['timestamp'] = {'$lt':args['timestamp']}
 		# if args['query'] is None or args['query'] == '':	# if search query wasn't entered
 			# cur = questions.find({'timestamp':{'$lt':args['timestamp']}}).limit(args['limit'])
 		else:
 			query['$and'] = [{'timestamp':{'$lt':args['timestamp']}}]
+			
 			if args['query'] is not None:	# if search query was entered
 				query['$and'].append({'$text':{'$search':args['query']}})
 			if args['tags'] is not None:
@@ -179,22 +183,29 @@ class Search(Resource):
 				query['$and'].append({'media':{'$ne':None}})
 			if args['accepted'] is not None and args['accepted']:
 				query['$and'].append({'accepted_answer_id':{'$ne':None}})
-			if args['sort_by'] is not None:
-				if args['sort_by'] == 'timestamp':
-					sort_by_score = False
+#			if args['sort_by'] is not None:
+#				print('sort_by: ' + str(args['sort_by']), sys.stderr)
+#				if args['sort_by'] == 'timestamp':
+#					sort_by_score = False
 
 
 			# cur = questions.find({'$and': [{'timestamp':{'$lt':args['timestamp']}},
 			# 							  {'$text':{'$search':args['query']}}]}).limit(args['limit'])
 		cur = None
+		if args['sort_by'] is not None:
+			if args['sort_by'] == 'timestamp':
+				sort_by_score = False
+		print('--------------------query: ' + str(query), sys.stderr)
 		if sort_by_score:
-			cur = questions.find(query).limit(args['limit']).sort([('score', pymongo.DESCENDING)])
+			print("^^^^^^^^^^^^^^^^^^^^^^^sorting by score", sys.stderr)
+			cur = questions.find(query).limit(args['limit']).sort('score', -1)
 		else:
-			cur = questions.find(query).limit(args['limit']).sort([('timestamp', pymongo.DESCENDING)])
+			print('^^^^^^^^^^^^^^^^^^^^^^^sorting by timestamp', sys.stderr)
+			cur = questions.find(query).limit(args['limit']).sort('timestamp', -1)
 		users = get_users_coll()
 		listquestions = []
 		for question in cur:
-			print(str(question) + '----------------------------', sys.stderr)
+			#print(str(question) + '----------------------------', sys.stderr)
 			resp = {}
 			resp['status'] = 'OK'
 			resp['id'] = question['id']
@@ -211,7 +222,7 @@ class Search(Resource):
 			u = {}
 			u['username'] = user['username']
 			u['reputation'] = user['reputation']
-			resp['user'] = u			
+			resp['user'] = u
 			listquestions.append(resp)
 		resp = {}
 		resp['status'] = 'OK'
