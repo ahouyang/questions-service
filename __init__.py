@@ -7,6 +7,7 @@ import smtplib, ssl
 import string
 import random
 import time
+from cassandra.cluster import Cluster
 
 app = Flask(__name__)
 api = Api(app)
@@ -87,12 +88,35 @@ class DeleteQuestion(Resource):
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
 		if question is not None and question['username'] == args['user']:
+			self._delete_answers(args['id'])
+			media = question['media']
+			if media is not None:
+				self._delete_media(media)
 			questions.delete_one({'id':args['id']})
-			return {'status': 'OK'}
 			#TODO : Delete answers and associated metadata
+			return {'status': 'OK'}
 		else:
 			resp = {'status': 'ERROR'}, 400
 			return resp
+	def _delete_answers(self, id):
+		answers = get_answers_coll()
+		answers.delete_many({'question_id': id})
+
+	def _delete_media(self, ids):
+		cluster = Cluster(['130.245.171.50'])
+		session = cluster.connect(keyspace='stackoverflow')
+		liststring = '('
+		if len(ids) == 1:
+			liststring = "('{}')".format(ids[0])
+		else:
+			for id in ids:
+				liststring += "'{}',".format(id)
+			liststring = liststring[:-1]
+			liststring += ')'
+		cqldelete = 'delete from media where id in {};'.format(liststring)
+		session.execute(cqldelete)
+
+
 
 class AddAnswer(Resource):
 	def post(self):
