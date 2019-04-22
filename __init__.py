@@ -20,6 +20,7 @@ class AddQuestion(Resource):
 		parser.add_argument('username')
 		parser.add_argument('tags', action='append')
 		args = parser.parse_args()
+		print("Adding question -> {}".format(str(args)), sys.stderr)
 		questions = get_questions_coll()
 		dbidnum = questions.find_one({'idnum':{'$gt': 0}})
 		if dbidnum == None:
@@ -48,11 +49,11 @@ class AddQuestion(Resource):
 class GetQuestion(Resource):
 	def post(self):
 		args = parse_args_list(['id', 'user'])
-		print(str(args) + "******************************", sys.stderr)
+		#print(str(args) + "******************************", sys.stderr)
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
 		if question is None:
-			return {'status':'error', 'error': 'no question with id ' + args['id']}
+			return {'status':'error', 'error': 'no question with id ' + args['id']}, 400
 		viewed = question['viewed']
 		inc = args['user'] not in viewed
 		if inc:
@@ -79,7 +80,7 @@ class GetQuestion(Resource):
 		u['reputation'] = user['reputation']
 		q['user'] = u
 		resp['question'] = q
-		print(str(resp) + "<- is resp ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", sys.stderr)
+		#print(str(resp) + "<- is resp ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", sys.stderr)
 		return resp
 
 class DeleteQuestion(Resource):
@@ -96,7 +97,7 @@ class DeleteQuestion(Resource):
 			#TODO : Delete answers and associated metadata
 			return {'status': 'OK'}
 		else:
-			resp = {'status': 'ERROR'}, 400
+			resp = {'status': 'error'}, 400
 			return resp
 	def _delete_answers(self, id):
 		answers = get_answers_coll()
@@ -155,7 +156,7 @@ class GetAnswers(Resource):
 		questions = get_questions_coll()
 		question = questions.find_one({'id':id})
 		if question is None:
-			return {'status':'error', 'error': 'no question with id ' + id}
+			return {'status':'error', 'error': 'no question with id ' + id}, 400
 		answers_cur = answers.find({'question_id':id})
 		resp = {}
 		resp['answers'] = []
@@ -191,7 +192,7 @@ class Search(Resource):
 		sort_by_score = True
 		if args['tags'] is not None and args['tags'][0] is None:
 			args['tags'] = None
-		print('#####################' + str(args), sys.stderr)
+		#print('#####################' + str(args), sys.stderr)
 		if args['query'] is None and args['tags'] is None and args['has_media'] is None and args['accepted'] is None:
 			query['timestamp'] = {'$lt':args['timestamp']}
 		# if args['query'] is None or args['query'] == '':	# if search query wasn't entered
@@ -219,12 +220,12 @@ class Search(Resource):
 		if args['sort_by'] is not None:
 			if args['sort_by'] == 'timestamp':
 				sort_by_score = False
-		print('--------------------query: ' + str(query), sys.stderr)
+		#print('--------------------query: ' + str(query), sys.stderr)
 		if sort_by_score:
-			print("^^^^^^^^^^^^^^^^^^^^^^^sorting by score", sys.stderr)
+			#print("^^^^^^^^^^^^^^^^^^^^^^^sorting by score", sys.stderr)
 			cur = questions.find(query).limit(args['limit']).sort('score', -1)
 		else:
-			print('^^^^^^^^^^^^^^^^^^^^^^^sorting by timestamp', sys.stderr)
+			#print('^^^^^^^^^^^^^^^^^^^^^^^sorting by timestamp', sys.stderr)
 			cur = questions.find(query).limit(args['limit']).sort('timestamp', -1)
 		users = get_users_coll()
 		listquestions = []
@@ -277,7 +278,7 @@ class Upvote(Resource):
 		parser.add_argument('username')
 		parser.add_argument('upvote', type=inputs.boolean)
 		args = parser.parse_args()
-		print('####################' + str(args), sys.stderr)
+		#print('####################' + str(args), sys.stderr)
 		username = args['username']
 		upvote = args['upvote']
 		step = 1 if upvote else -1
@@ -291,7 +292,7 @@ class Upvote(Resource):
 		rep = poster['reputation']
 		upvoted = user['upvoted']
 		downvoted = user['downvoted']
-		print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
+		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
 			if id in upvoted:
 				step -= 2
@@ -301,7 +302,7 @@ class Upvote(Resource):
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}, 
 					'$push':{'upvoted':id}})
 			else:
-				print('adding {} to upvoted'.format(id), sys.stderr)
+				#print('adding {} to upvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'upvoted':id}})
 		else:
 			if id in upvoted:
@@ -312,7 +313,7 @@ class Upvote(Resource):
 				step += 2
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
-				print('adding {} to downvoted'.format(id), sys.stderr)
+				#print('adding {} to downvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		questions.update_one({'id':id}, {'$set':{'score':score}})
@@ -328,7 +329,7 @@ class UpvoteAnswer(Resource):
 		parser.add_argument('username')
 		parser.add_argument('upvote', type=inputs.boolean)
 		args = parser.parse_args()
-		print('####################' + str(args), sys.stderr)
+		#print('####################' + str(args), sys.stderr)
 		username = args['username']
 		upvote = args['upvote']
 		step = 1 if upvote else -1
@@ -342,7 +343,7 @@ class UpvoteAnswer(Resource):
 		rep = poster['reputation']
 		upvoted = user['upvoted']
 		downvoted = user['downvoted']
-		print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
+		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
 			if id in upvoted:
 				step -= 2
@@ -352,7 +353,7 @@ class UpvoteAnswer(Resource):
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}, 
 					'$push':{'upvoted':id}})
 			else:
-				print('adding {} to upvoted'.format(id), sys.stderr)
+				#print('adding {} to upvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'upvoted':id}})
 		else:
 			if id in upvoted:
@@ -363,7 +364,7 @@ class UpvoteAnswer(Resource):
 				step += 2
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
-				print('adding {} to downvoted'.format(id), sys.stderr)
+				#print('adding {} to downvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		answers.update_one({'id':id}, {'$set':{'score':score}})
@@ -383,10 +384,10 @@ class AcceptAnswer(Resource):
 		qid = answer['question_id']
 		question = questions.find_one({'id':qid})
 		if username != question['username']:
-			return {'status':'error', 'error':'not original asker'}
+			return {'status':'error', 'error':'not original asker'}, 400
 		accepted_id = question['accepted_answer_id']
 		if accepted_id is not None:
-			return {'status':'error', 'error':'there is already an accepted answer'}
+			return {'status':'error', 'error':'there is already an accepted answer'}, 400
 		questions.update_one({'id':qid}, {'$set':{'accepted_answer_id':id}})
 		answers.update_one({'id':id}, {'$set':{'is_accepted':True}})
 		return {'status':'OK'}
