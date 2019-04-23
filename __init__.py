@@ -392,6 +392,13 @@ class AcceptAnswer(Resource):
 		answers.update_one({'id':id}, {'$set':{'is_accepted':True}})
 		return {'status':'OK'}
 
+class Reset(Resource):
+	def get(self):
+		myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
+		myclient.drop_database('finalproject')
+		return {'status':'OK'}
+		# mydb = myclient['finalproject']
+
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
@@ -429,6 +436,7 @@ api.add_resource(DeleteQuestion, '/deletequestion')
 api.add_resource(Upvote, '/upvote/<id>')
 api.add_resource(UpvoteAnswer, '/upvoteanswer/<id>')
 api.add_resource(AcceptAnswer, '/acceptanswer/<id>')
+api.add_resource(Reset, '/reset')
 
 if __name__ == '__main__':
 	app.run(debug=True)
