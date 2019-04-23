@@ -49,7 +49,7 @@ class AddQuestion(Resource):
 class GetQuestion(Resource):
 	def post(self):
 		args = parse_args_list(['id', 'user'])
-		#print(str(args) + "******************************", sys.stderr)
+		print("getting question {}".format(str(args)), sys.stderr)
 		questions = get_questions_coll()
 		question = questions.find_one({'id':args['id']})
 		if question is None:
