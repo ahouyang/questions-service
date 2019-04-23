@@ -19,8 +19,15 @@ class AddQuestion(Resource):
 		parser.add_argument('body')
 		parser.add_argument('username')
 		parser.add_argument('tags', action='append')
+		parser.add_argument('media', action='append')
 		args = parser.parse_args()
+		if args['media'][0] is None:
+			args['media'] = None
 		print("Adding question -> {}".format(str(args)), sys.stderr)
+		if args['media'] is not None:
+			tup = check_questions_free(args['media'])
+			if not tup[0]:
+				return {'status':'error', 'error':'media id {} already associated'.format(tup[1])}
 		questions = get_questions_coll()
 		dbidnum = questions.find_one({'idnum':{'$gt': 0}})
 		if dbidnum == None:
@@ -399,6 +406,24 @@ class Reset(Resource):
 		return {'status':'OK'}
 		# mydb = myclient['finalproject']
 
+
+def check_questions_free(ids):
+	cluster = Cluster(['130.245.171.50'])
+	session = cluster.connect(keyspace='stackoverflow')
+	if len(ids) == 1:
+		inlist = '(\'{}\')' .format(ids[0])
+	else:
+		inlist = '('
+		for id in ids:
+			inlist += "'{}',".format(id)
+		inlist = inlist[:-1]
+		inlist += ')'
+	cqlselect = 'select id, added from media where id in {}'.format(inlist)
+	cur = session.execute(cqlselect)
+	for row in cur:
+		if not row[1]:
+			return (False, row[0])
+	return (True, None)
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
