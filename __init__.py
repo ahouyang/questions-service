@@ -11,6 +11,12 @@ from cassandra.cluster import Cluster
 
 app = Flask(__name__)
 api = Api(app)
+myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
+mydb = myclient['finalproject']
+users = mydb['users']
+questions = mydb['questions']
+answers = mydb['answers']
+
 
 class AddQuestion(Resource):
 	def post(self):
@@ -453,22 +459,13 @@ def parse_args_list(argnames):
 
 def get_questions_coll():
 	# reconnecting may cause performance issues
-	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
-	mydb = myclient['finalproject']
-	users = mydb['questions']
-	return users
+	return questions
 
 def get_users_coll():
-	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
-	mydb = myclient['finalproject']
-	users = mydb['users']
 	return users
 
 def get_answers_coll():
-	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
-	mydb = myclient['finalproject']
-	users = mydb['answers']
-	return users
+	return answers
 
 api.add_resource(AddQuestion, '/add')
 api.add_resource(GetQuestion, '/getquestion')
