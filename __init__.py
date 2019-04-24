@@ -16,6 +16,8 @@ mydb = myclient['finalproject']
 users = mydb['users']
 questions = mydb['questions']
 answers = mydb['answers']
+cluster = Cluster(['130.245.171.50'])
+session = cluster.connect(keyspace='stackoverflow')
 
 
 class AddQuestion(Resource):
@@ -62,8 +64,8 @@ class AddQuestion(Resource):
 	def _set_added(self, ids):
 		if ids is None:
 			return
-		cluster = Cluster(['130.245.171.50'])
-		session = cluster.connect(keyspace='stackoverflow')
+		# cluster = Cluster(['130.245.171.50'])
+		# session = cluster.connect(keyspace='stackoverflow')
 		if len(ids) == 1:
 			inlist = '(\'{}\')' .format(ids[0])
 		else:
@@ -136,8 +138,8 @@ class DeleteQuestion(Resource):
 		answers.delete_many({'question_id': id})
 
 	def _delete_media(self, ids):
-		cluster = Cluster(['130.245.171.50'])
-		session = cluster.connect(keyspace='stackoverflow')
+		#cluster = Cluster(['130.245.171.50'])
+		#session = cluster.connect(keyspace='stackoverflow')
 		liststring = '('
 		if len(ids) == 1:
 			liststring = "('{}')".format(ids[0])
@@ -433,8 +435,8 @@ class Reset(Resource):
 
 
 def check_questions_free(ids, username):
-	cluster = Cluster(['130.245.171.50'])
-	session = cluster.connect(keyspace='stackoverflow')
+	# cluster = Cluster(['130.245.171.50'])
+	# session = cluster.connect(keyspace='stackoverflow')
 	if len(ids) == 1:
 		inlist = '(\'{}\')' .format(ids[0])
 	else:
