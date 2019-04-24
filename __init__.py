@@ -438,7 +438,7 @@ def check_questions_free(ids):
 	cqlselect = 'select id, added from media where id in {}'.format(inlist)
 	cur = session.execute(cqlselect)
 	for row in cur:
-		if not row[1]:
+		if row[1]:
 			return (False, row[0])
 	return (True, None)
 
