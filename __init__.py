@@ -25,7 +25,7 @@ class AddQuestion(Resource):
 			args['media'] = None
 		print("Adding question -> {}".format(str(args)), sys.stderr)
 		if args['media'] is not None:
-			tup = check_questions_free(args['media'])
+			tup = check_questions_free(args['media'], args['username'])
 			if not tup[0]:
 				return {'status':'error', 'error':'media id {} already associated'.format(tup[1])}
 		questions = get_questions_coll()
@@ -424,7 +424,7 @@ class Reset(Resource):
 		# mydb = myclient['finalproject']
 
 
-def check_questions_free(ids):
+def check_questions_free(ids, username):
 	cluster = Cluster(['130.245.171.50'])
 	session = cluster.connect(keyspace='stackoverflow')
 	if len(ids) == 1:
@@ -435,10 +435,10 @@ def check_questions_free(ids):
 			inlist += "'{}',".format(id)
 		inlist = inlist[:-1]
 		inlist += ')'
-	cqlselect = 'select id, added from media where id in {}'.format(inlist)
+	cqlselect = 'select id, added, poster from media where id in {}'.format(inlist)
 	cur = session.execute(cqlselect)
 	for row in cur:
-		if row[1]:
+		if row[1] or row[2] != username:
 			return (False, row[0])
 	return (True, None)
 
