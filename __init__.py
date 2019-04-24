@@ -54,6 +54,8 @@ class AddQuestion(Resource):
 		return {'status': 'OK', 'id': question['id']}
 
 	def _set_added(self, ids):
+		if ids is None:
+			return
 		cluster = Cluster(['130.245.171.50'])
 		session = cluster.connect(keyspace='stackoverflow')
 		if len(ids) == 1:
