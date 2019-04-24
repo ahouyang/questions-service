@@ -47,10 +47,27 @@ class AddQuestion(Resource):
 		question['answer_count'] = 0
 		question['timestamp'] = time.time()
 		question['accepted_answer_id'] = None
-		question['media'] = None
+		question['media'] = args['media']
+		self._set_added(args['media'])
 		question['viewed'] = []
 		questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
+
+	def _set_added(self, ids):
+		cluster = Cluster(['130.245.171.50'])
+		session = cluster.connect(keyspace='stackoverflow')
+		if len(ids) == 1:
+			inlist = '(\'{}\')' .format(ids[0])
+		else:
+			inlist = '('
+			for id in ids:
+				inlist += "'{}',".format(id)
+			inlist = inlist[:-1]
+			inlist += ')'
+		cqlupdate = "update media set added = true where id in {};".format(inlist)
+		session.execute(cqlupdate)
+
+
 	
 
 class GetQuestion(Resource):
