@@ -38,15 +38,16 @@ class AddQuestion(Resource):
 			if not tup[0]:
 				return {'status':'error', 'error':'media id {} already associated'.format(tup[1])}
 		questions = get_questions_coll()
-		dbidnum = questions.find_one({'idnum':{'$gt': 0}})
-		if dbidnum == None:
-			idnum = {}
-			idnum['idnum'] = 0
-			questions.insert_one(idnum)
-		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
-		questions.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
+
+		# dbidnum = questions.find_one({'idnum':{'$gt': 0}})
+		# if dbidnum == None:
+		# 	idnum = {}
+		# 	idnum['idnum'] = 0
+		# 	questions.insert_one(idnum)
+		# idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
+		# questions.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
 		question = {}
-		question['id'] = args['username'] + '_q_' + str(idnum) 
+		question['id'] = self._generate_code
 		question['title'] = args['title']
 		question['body'] = args['body']
 		question['username'] = args['username']
@@ -69,6 +70,9 @@ class AddQuestion(Resource):
 		# connection.close()
 		# questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
+
+	def _generate_code(self):
+		return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
 	def _set_added(self, ids):
 		if ids is None:
