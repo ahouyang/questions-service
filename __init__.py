@@ -16,7 +16,7 @@ mydb = myclient['finalproject']
 users = mydb['users']
 questions = mydb['questions']
 answers = mydb['answers']
-cluster = Cluster(['130.245.171.50'])
+cluster = Cluster(['192.168.122.21'])
 session = cluster.connect(keyspace='stackoverflow')
 
 
