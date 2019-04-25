@@ -20,9 +20,6 @@ questions = mydb['questions']
 answers = mydb['answers']
 cluster = Cluster(['192.168.122.21'])
 session = cluster.connect(keyspace='stackoverflow')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
-channel = connection.channel()
-
 
 class AddQuestion(Resource):
 	def post(self):
@@ -62,12 +59,14 @@ class AddQuestion(Resource):
 		question['media'] = args['media']
 		self._set_added(args['media'])
 		question['viewed'] = []
-		channel.exchange_declare('mongodb', 'direct')
+		#channel.exchange_declare('mongodb', 'direct')
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		question['collection'] = 'questions'
 		msg = json.dumps(question)
 		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
-		connection.close()
+		# connection.close()
 		# questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
 
