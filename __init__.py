@@ -7,6 +7,8 @@ import smtplib, ssl
 import string
 import random
 import time
+import pika
+import json
 from cassandra.cluster import Cluster
 
 app = Flask(__name__)
@@ -18,6 +20,8 @@ questions = mydb['questions']
 answers = mydb['answers']
 cluster = Cluster(['192.168.122.21'])
 session = cluster.connect(keyspace='stackoverflow')
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+channel = connection.channel()
 
 
 class AddQuestion(Resource):
@@ -58,7 +62,13 @@ class AddQuestion(Resource):
 		question['media'] = args['media']
 		self._set_added(args['media'])
 		question['viewed'] = []
-		questions.insert_one(question)
+		channel.exchange_declare('mongodb', 'direct')
+		channel.queue_declare(queue='mongo', durable=True)
+		question['collection'] = 'questions'
+		msg = json.dumps(question)
+		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		connection.close()
+		# questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
 
 	def _set_added(self, ids):
