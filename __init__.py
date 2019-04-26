@@ -47,7 +47,7 @@ class AddQuestion(Resource):
 		# idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
 		# questions.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
 		question = {}
-		question['id'] = self._generate_code
+		question['id'] = self._generate_code()
 		question['title'] = args['title']
 		question['body'] = args['body']
 		question['username'] = args['username']
