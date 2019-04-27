@@ -82,7 +82,7 @@ class AddQuestion(Resource):
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		write = {}
-		write['collection'] = 'questions'
+		write['collection'] = 'media'
 		write['action'] = "update"
 		write['filter'] = {'id':{'$in':ids}}
 		write['update'] = {'$set':{'added':True}}
