@@ -400,7 +400,8 @@ class Upvote(Resource):
 				if rep == 1:
 					users.update_one({'username':username}, {'$push':{'downvoted_waived':id}})
 				#print('adding {} to downvoted'.format(id), sys.stderr)
-				users.update_one({'username':username}, {'$push':{'downvoted':id}})
+				else:
+					users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		questions.update_one({'id':id}, {'$set':{'score':score}})
 		rep = rep + step if rep + step > 1 else 1
@@ -468,7 +469,10 @@ class UpvoteAnswer(Resource):
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
 				#print('adding {} to downvoted'.format(id), sys.stderr)
-				users.update_one({'username':username}, {'$push':{'downvoted':id}})
+				if rep == 1:
+					users.update_one({'username':username}, {'$push':{'downvoted_waived':id}})
+				else:
+					users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		answers.update_one({'id':id}, {'$set':{'score':score}})
 		rep = rep + step if rep + step > 1 else 1
