@@ -156,6 +156,10 @@ class DeleteQuestion(Resource):
 			return resp
 	def _delete_answers(self, id):
 		answers = get_answers_coll()
+		deleted = answers.find({'question_id':id})
+		for doc in deleted:
+			if doc['media'] is not None:
+				self._delete_media(doc['media'])
 		answers.delete_many({'question_id': id})
 
 	def _delete_media(self, ids):
@@ -171,6 +175,7 @@ class DeleteQuestion(Resource):
 			liststring += ')'
 		cqldelete = 'delete from media where id in {};'.format(liststring)
 		session.execute(cqldelete)
+		media.delete_many({'id':{'$in':ids}})
 
 
 
