@@ -206,7 +206,7 @@ class AddAnswer(Resource):
 		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
-		answer['collection'] = 'questions'
+		answer['collection'] = 'answers'
 		answer['action'] = 'insert'
 		msg = json.dumps(answer)
 		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
