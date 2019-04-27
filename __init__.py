@@ -461,9 +461,10 @@ def check_questions_free(ids, username):
 	# 	inlist += ')'
 	# cqlselect = 'select id, added, poster from media where id in {}'.format(inlist)
 	# cur = session.execute(cqlselect)
-	cur = media.count_documents({'poster':username, 'id':{'$in':ids}, 'added':True})
-	if cur != 0:
-		return False
+	cur = media.find({'id':{'$in':ids}})
+	for row in cur:
+		if row['poster'] != username or row['added']:
+			return False
 	return True
 	# for row in cur:
 	# 	if row[1] or row[2] != username:
