@@ -200,7 +200,7 @@ class AddAnswer(Resource):
 		answer['body'] = args['body']
 		answer['media'] = args.get('media')
 		answer['user'] = args['username']
-		answer['score'] = 1
+		answer['score'] = 0
 		answer['is_accepted'] = False
 		answer['timestamp'] = time.time()
 		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
