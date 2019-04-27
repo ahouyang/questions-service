@@ -182,16 +182,20 @@ class AddAnswer(Resource):
 		parser.add_argument('id')
 		parser.add_argument('media', action='append')
 		args = parser.parse_args()
+		if args['media'] is not None:
+			tup = check_questions_free(args['media'], args['username'])
+			if not tup:
+				return {'status':'error', 'error':'media id already associated'}
 		answers = get_answers_coll()
 		answer = {}
-		dbidnum = answers.find_one({'idnum':{'$gt': 0}})
-		if dbidnum == None:
-			idnum = {}
-			idnum['idnum'] = 0
-			answers.insert_one(idnum)
-		idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
-		answers.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
-		answer['id'] = args['username'] + '_a_' + str(idnum)
+		# dbidnum = answers.find_one({'idnum':{'$gt': 0}})
+		# if dbidnum == None:
+		# 	idnum = {}
+		# 	idnum['idnum'] = 0
+		# 	answers.insert_one(idnum)
+		# idnum = (dbidnum['idnum'] + 1) if dbidnum is not None else 1
+		# answers.update_one({'idnum':{'$gt':-1}}, {'$set':{'idnum':idnum}})
+		answer['id'] = self._generate_code()
 		answer['question_id'] = args['id']
 		answer['body'] = args['body']
 		answer['media'] = args.get('media')
@@ -199,11 +203,21 @@ class AddAnswer(Resource):
 		answer['score'] = 1
 		answer['is_accepted'] = False
 		answer['timestamp'] = time.time()
-		answers.insert_one(answer)
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		channel = connection.channel()
+		channel.queue_declare(queue='mongo', durable=True)
+		answer['collection'] = 'questions'
+		answer['action'] = 'insert'
+		msg = json.dumps(answer)
+		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		# answers.insert_one(answer)
 		resp = {}
 		resp['status'] = 'OK'
 		resp['id'] = answer['id']
 		return resp
+
+	def _generate_code(self):
+		return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
 class GetAnswers(Resource):
 	def get(self, id):
