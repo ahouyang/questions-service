@@ -404,8 +404,8 @@ class Upvote(Resource):
 					users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		questions.update_one({'id':id}, {'$set':{'score':score}})
-		rep = rep + step if rep + step > 1 else 1
 		if not waived:
+			rep = rep + step if rep + step > 1 else 1
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		else:
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep + rep_step}})
@@ -475,8 +475,8 @@ class UpvoteAnswer(Resource):
 					users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		answers.update_one({'id':id}, {'$set':{'score':score}})
-		rep = rep + step if rep + step > 1 else 1
 		if not waived:
+			rep = rep + step if rep + step > 1 else 1
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		else:
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep + rep_step}})
