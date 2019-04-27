@@ -65,6 +65,7 @@ class AddQuestion(Resource):
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		question['collection'] = 'questions'
+		question['action'] = 'insert'
 		msg = json.dumps(question)
 		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
 		# connection.close()
@@ -77,7 +78,17 @@ class AddQuestion(Resource):
 	def _set_added(self, ids):
 		if ids is None:
 			return
-		media.update_many({'id':{'$in':ids}}, {'$set':{'added':True}})
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		channel = connection.channel()
+		channel.queue_declare(queue='mongo', durable=True)
+		write = {}
+		write['collection'] = 'questions'
+		write['action'] = "update"
+		write['filter'] = {'id':{'$in':ids}}
+		write['update'] = {'$set':{'added':True}}
+		msg = json.dumps(write)
+		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		# media.update_many({'id':{'$in':ids}}, {'$set':{'added':True}})
 		# cluster = Cluster(['130.245.171.50'])
 		# session = cluster.connect(keyspace='stackoverflow')
 		# if len(ids) == 1:
@@ -90,10 +101,6 @@ class AddQuestion(Resource):
 		# 	inlist += ')'
 		# cqlupdate = "update media set added = true where id in {};".format(inlist)
 		# session.execute(cqlupdate)
-
-
-	
-
 class GetQuestion(Resource):
 	def post(self):
 		args = parse_args_list(['id', 'user'])
