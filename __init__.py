@@ -361,6 +361,9 @@ class Upvote(Resource):
 		rep = poster['reputation']
 		upvoted = user['upvoted']
 		downvoted = user['downvoted']
+		upvoted_waived = user['upvoted_waived']
+		downvoted_waived = user['downvoted_waived']
+		waived = False
 		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
 			if id in upvoted:
@@ -374,7 +377,11 @@ class Upvote(Resource):
 				#print('adding {} to upvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'upvoted':id}})
 		else:
-			if id in upvoted:
+			if id in downvoted_waived:
+				waived = True
+				step = 1
+				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id}})
+			elif id in upvoted:
 				step -= 1
 				users.update_one({'username':username}, {'$pull':{'upvoted':id},
 					'$push':{'downvoted':id}})
@@ -382,12 +389,15 @@ class Upvote(Resource):
 				step += 2
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
+				if rep == 1:
+					users.update_one({'username':username}, {'$push':{'downvoted_waived':id}})
 				#print('adding {} to downvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'downvoted':id}})
 		score += step
 		questions.update_one({'id':id}, {'$set':{'score':score}})
 		rep = rep + step if rep + step > 1 else 1
-		users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+		if not waived:
+			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		resp = {}
 		resp['status'] = 'OK'
 		return resp
@@ -412,6 +422,9 @@ class UpvoteAnswer(Resource):
 		rep = poster['reputation']
 		upvoted = user['upvoted']
 		downvoted = user['downvoted']
+		upvoted_waived = user['upvoted_waived']
+		downvoted_waived = user['downvoted_waived']
+		waived = False
 		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
 			if id in upvoted:
@@ -425,7 +438,11 @@ class UpvoteAnswer(Resource):
 				#print('adding {} to upvoted'.format(id), sys.stderr)
 				users.update_one({'username':username}, {'$push':{'upvoted':id}})
 		else:
-			if id in upvoted:
+			if id in downvoted_waived:
+				waived = True
+				step = 1
+				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id}})
+			elif id in upvoted:
 				step -= 1
 				users.update_one({'username':username}, {'$pull':{'upvoted':id},
 					'$push':{'downvoted':id}})
@@ -438,7 +455,9 @@ class UpvoteAnswer(Resource):
 		score += step
 		answers.update_one({'id':id}, {'$set':{'score':score}})
 		rep = rep + step if rep + step > 1 else 1
-		users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+		if not waived:
+			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+			# users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		resp = {}
 		resp['status'] = 'OK'
 		return resp
