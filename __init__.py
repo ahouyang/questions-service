@@ -52,7 +52,7 @@ class AddQuestion(Resource):
 		question['body'] = args['body']
 		question['username'] = args['username']
 		question['tags'] = [] if args['tags'] is None else args['tags']
-		question['score'] = 1
+		question['score'] = 0
 		question['view_count'] = 0
 		question['answer_count'] = 0
 		question['timestamp'] = time.time()
