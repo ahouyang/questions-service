@@ -77,18 +77,19 @@ class AddQuestion(Resource):
 	def _set_added(self, ids):
 		if ids is None:
 			return
+		media.update_many({'id':{'$in':ids}}, {'$set':{'added':True}})
 		# cluster = Cluster(['130.245.171.50'])
 		# session = cluster.connect(keyspace='stackoverflow')
-		if len(ids) == 1:
-			inlist = '(\'{}\')' .format(ids[0])
-		else:
-			inlist = '('
-			for id in ids:
-				inlist += "'{}',".format(id)
-			inlist = inlist[:-1]
-			inlist += ')'
-		cqlupdate = "update media set added = true where id in {};".format(inlist)
-		session.execute(cqlupdate)
+		# if len(ids) == 1:
+		# 	inlist = '(\'{}\')' .format(ids[0])
+		# else:
+		# 	inlist = '('
+		# 	for id in ids:
+		# 		inlist += "'{}',".format(id)
+		# 	inlist = inlist[:-1]
+		# 	inlist += ')'
+		# cqlupdate = "update media set added = true where id in {};".format(inlist)
+		# session.execute(cqlupdate)
 
 
 	
