@@ -33,7 +33,7 @@ class AddQuestion(Resource):
 		args = parser.parse_args()
 		if args['media'][0] is None:
 			args['media'] = None
-		print("Adding question -> {}".format(str(args)), sys.stderr)
+		#print("Adding question -> {}".format(str(args)), sys.stderr)
 		if args['media'] is not None:
 			tup = check_questions_free(args['media'], args['username'])
 			if not tup:
