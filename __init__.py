@@ -364,13 +364,20 @@ class Upvote(Resource):
 		upvoted_waived = user['upvoted_waived']
 		downvoted_waived = user['downvoted_waived']
 		waived = False
+		rep_step = None
 		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
-			if id in upvoted:
-				step -= 2
+			if id in downvoted_waived:
+				waived = True
+				step = 2
+				rep_step = 1
+				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id},'$push':{'upvoted':id}})
+				# users.update_one({'username':username}, {'$push':{'upvoted':id}})
+			elif id in upvoted:
+				step = -1
 				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
 			elif id in downvoted:
-				step += 1
+				step = 2
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}, 
 					'$push':{'upvoted':id}})
 			else:
@@ -380,13 +387,14 @@ class Upvote(Resource):
 			if id in downvoted_waived:
 				waived = True
 				step = 1
+				rep_step = 0
 				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id}})
 			elif id in upvoted:
-				step -= 1
+				step = -2
 				users.update_one({'username':username}, {'$pull':{'upvoted':id},
 					'$push':{'downvoted':id}})
 			elif id in downvoted:
-				step += 2
+				step = 1
 				users.update_one({'username':username}, {'$pull':{'downvoted':id}})
 			else:
 				if rep == 1:
@@ -398,6 +406,8 @@ class Upvote(Resource):
 		rep = rep + step if rep + step > 1 else 1
 		if not waived:
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+		else:
+			users.update_one({'username':poster_username}, {'$set':{'reputation':rep + rep_step}})
 		resp = {}
 		resp['status'] = 'OK'
 		return resp
@@ -425,9 +435,15 @@ class UpvoteAnswer(Resource):
 		upvoted_waived = user['upvoted_waived']
 		downvoted_waived = user['downvoted_waived']
 		waived = False
+		rep_step = None
 		#print('id: {}, upvoted: {}, downvoted: {}'.format(id, str(upvoted), str(downvoted)), sys.stderr)
 		if upvote:
-			if id in upvoted:
+			if id in downvoted_waived:
+				waived = True
+				step = 2
+				rep_step = 1
+				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id},'$push':{'upvoted':id}})
+			elif id in upvoted:
 				step -= 2
 				users.update_one({'username':username}, {'$pull':{'upvoted':id}})
 			elif id in downvoted:
@@ -441,6 +457,7 @@ class UpvoteAnswer(Resource):
 			if id in downvoted_waived:
 				waived = True
 				step = 1
+				rep_step = 0
 				users.update_one({'username':username}, {'$pull':{'downvoted_waived':id}})
 			elif id in upvoted:
 				step -= 1
@@ -457,6 +474,8 @@ class UpvoteAnswer(Resource):
 		rep = rep + step if rep + step > 1 else 1
 		if not waived:
 			users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
+		else:
+			users.update_one({'username':poster_username}, {'$set':{'reputation':rep + rep_step}})
 			# users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		resp = {}
 		resp['status'] = 'OK'
