@@ -489,6 +489,7 @@ class UpvoteAnswer(Resource):
 			# users.update_one({'username':poster_username}, {'$set':{'reputation':rep}})
 		resp = {}
 		resp['status'] = 'OK'
+		resp['score'] = score
 		return resp
 
 class AcceptAnswer(Resource):
