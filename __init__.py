@@ -214,7 +214,7 @@ class AddAnswer(Resource):
 		answer['collection'] = 'answers'
 		answer['action'] = 'insert'
 		msg = json.dumps(answer)
-		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		channel.basic_publish(exchange='',routing_key='mongo', body=msg)
 		# answers.insert_one(answer)
 		resp = {}
 		resp['status'] = 'OK'
