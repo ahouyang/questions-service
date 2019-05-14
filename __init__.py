@@ -61,7 +61,7 @@ class AddQuestion(Resource):
 		self._set_added(args['media'])
 		question['viewed'] = []
 		#channel.exchange_declare('mongodb', 'direct')
-		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.47'))
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		question['collection'] = 'questions'
@@ -78,7 +78,7 @@ class AddQuestion(Resource):
 	def _set_added(self, ids):
 		if ids is None:
 			return
-		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.47'))
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		write = {}
@@ -208,7 +208,7 @@ class AddAnswer(Resource):
 		answer['score'] = 0
 		answer['is_accepted'] = False
 		answer['timestamp'] = time.time()
-		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.23'))
+		connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.122.47'))
 		channel = connection.channel()
 		channel.queue_declare(queue='mongo', durable=True)
 		answer['collection'] = 'answers'
