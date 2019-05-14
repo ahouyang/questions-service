@@ -67,7 +67,7 @@ class AddQuestion(Resource):
 		question['collection'] = 'questions'
 		question['action'] = 'insert'
 		msg = json.dumps(question)
-		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		channel.basic_publish(exchange='',routing_key='mongo', body=msg)
 		# connection.close()
 		# questions.insert_one(question)
 		return {'status': 'OK', 'id': question['id']}
@@ -87,7 +87,7 @@ class AddQuestion(Resource):
 		write['filter'] = {'id':{'$in':ids}}
 		write['update'] = {'$set':{'added':True}}
 		msg = json.dumps(write)
-		channel.basic_publish(exchange='mongodb',routing_key='mongo', body=msg)
+		channel.basic_publish(exchange='',routing_key='mongo', body=msg)
 		# media.update_many({'id':{'$in':ids}}, {'$set':{'added':True}})
 		# cluster = Cluster(['130.245.171.50'])
 		# session = cluster.connect(keyspace='stackoverflow')
